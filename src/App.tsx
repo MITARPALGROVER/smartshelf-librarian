@@ -12,6 +12,7 @@ import BooksPage from "./pages/BooksPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import RoleManager from "./pages/RoleManager";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/roles" element={<RoleManager />} />
             <Route
               path="/"
               element={
