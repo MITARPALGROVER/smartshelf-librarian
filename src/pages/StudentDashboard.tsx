@@ -38,6 +38,16 @@ const StudentDashboard = () => {
   const [issuedBooks, setIssuedBooks] = useState<IssuedBook[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update current time every second for real-time countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -127,9 +137,8 @@ const StudentDashboard = () => {
   };
 
   const getTimeRemaining = (expiresAt: string) => {
-    const now = new Date();
     const expiry = new Date(expiresAt);
-    const diff = expiry.getTime() - now.getTime();
+    const diff = expiry.getTime() - currentTime.getTime();
     
     if (diff <= 0) return "Expired";
     
@@ -144,32 +153,32 @@ const StudentDashboard = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-4xl font-bold mb-2">Student Dashboard</h1>
-        <p className="text-muted-foreground">Manage your borrowed books and reservations</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Student Dashboard</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Manage your borrowed books and reservations</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               Currently Borrowed
             </CardTitle>
-            <CardDescription>Books you have checked out</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">Books you have checked out</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             {issuedBooks.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No books currently borrowed</p>
+              <p className="text-sm sm:text-base text-muted-foreground text-center py-4">No books currently borrowed</p>
             ) : (
               issuedBooks.map((book) => (
-                <div key={book.id} className="flex gap-4 p-4 bg-muted/50 rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{book.books.title}</h4>
-                    <p className="text-sm text-muted-foreground">{book.books.author}</p>
+                <div key={book.id} className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/50 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm sm:text-base truncate">{book.books.title}</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{book.books.author}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                       <span className="text-xs text-muted-foreground">
                         Due {formatDistanceToNow(new Date(book.due_date), { addSuffix: true })}
                       </span>
@@ -183,30 +192,30 @@ const StudentDashboard = () => {
 
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-warning" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
               Active Reservations
             </CardTitle>
-            <CardDescription>Books reserved and waiting for pickup</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">Books reserved and waiting for pickup</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             {reservations.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No active reservations</p>
+              <p className="text-sm sm:text-base text-muted-foreground text-center py-4">No active reservations</p>
             ) : (
               reservations.map((reservation) => (
-                <div key={reservation.id} className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-semibold">{reservation.books.title}</h4>
-                      <p className="text-sm text-muted-foreground">{reservation.books.author}</p>
+                <div key={reservation.id} className="p-3 sm:p-4 bg-warning/10 border border-warning/20 rounded-lg">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm sm:text-base truncate">{reservation.books.title}</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{reservation.books.author}</p>
                     </div>
-                    <Badge variant="outline" className="border-warning text-warning">
+                    <Badge variant="outline" className="border-warning text-warning text-xs flex-shrink-0">
                       Shelf {reservation.books.shelves?.shelf_number}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-warning font-medium">
-                    <Clock className="h-4 w-4" />
-                    Time remaining: {getTimeRemaining(reservation.expires_at)}
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-warning font-medium">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span>Time remaining: {getTimeRemaining(reservation.expires_at)}</span>
                   </div>
                 </div>
               ))
@@ -217,13 +226,13 @@ const StudentDashboard = () => {
 
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-success" />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
             How It Works
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ol className="space-y-3 list-decimal list-inside">
+          <ol className="space-y-2 sm:space-y-3 list-decimal list-inside text-sm sm:text-base">
             <li className="text-muted-foreground">
               Browse the book catalog and click <strong>"Reserve"</strong> on any available book
             </li>

@@ -96,10 +96,10 @@ const BooksPage = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-4xl font-bold mb-2">Book Catalog</h1>
-        <p className="text-muted-foreground">Browse and reserve books from our collection</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Book Catalog</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Browse and reserve books from our collection</p>
       </div>
 
       <div className="relative">
@@ -109,18 +109,18 @@ const BooksPage = () => {
           placeholder="Search by title, author, or ISBN..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 text-sm sm:text-base"
         />
       </div>
 
       {filteredBooks.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {searchQuery ? "No books found matching your search" : "No books available in the catalog"}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {filteredBooks.map((book) => (
             <BookCard key={book.id} book={book} onReservationChange={fetchBooks} />
           ))}

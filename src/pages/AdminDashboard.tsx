@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { BookOpen, Plus, Trash2, Users, BarChart } from "lucide-react";
 import { toast } from "sonner";
+import ShelfMonitor from "@/components/ShelfMonitor";
 
 interface Book {
   id: string;
@@ -149,15 +150,15 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-start">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage books, shelves, and system settings</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage books, shelves, and system settings</p>
         </div>
         <Dialog open={isAddBookOpen} onOpenChange={setIsAddBookOpen}>
           <DialogTrigger asChild>
-            <Button variant="accent">
+            <Button variant="accent" size="sm" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Add Book
             </Button>
@@ -246,7 +247,7 @@ const AdminDashboard = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="shadow-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Books</CardTitle>
@@ -271,7 +272,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card">
+        <Card className="shadow-card sm:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Shelves</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -285,23 +286,23 @@ const AdminDashboard = () => {
 
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle>Book Catalog</CardTitle>
-          <CardDescription>All books in the library system</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Book Catalog</CardTitle>
+          <CardDescription className="text-sm">All books in the library system</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {books.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
+              <p className="text-muted-foreground text-center py-8 text-sm sm:text-base">
                 No books in the catalog. Click "Add Book" to get started.
               </p>
             ) : (
-              <div className="grid gap-4">
+              <div className="grid gap-3 sm:gap-4">
                 {books.map((book) => (
-                  <div key={book.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{book.title}</h4>
-                      <p className="text-sm text-muted-foreground">{book.author}</p>
-                      <div className="flex items-center gap-4 mt-1">
+                  <div key={book.id} className="flex items-start sm:items-center justify-between p-3 sm:p-4 bg-muted/50 rounded-lg gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm sm:text-base truncate">{book.title}</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{book.author}</p>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1">
                         {book.isbn && (
                           <span className="text-xs text-muted-foreground">ISBN: {book.isbn}</span>
                         )}
@@ -323,7 +324,7 @@ const AdminDashboard = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteBook(book.id, book.title)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -335,38 +336,8 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
 
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Shelf Status</CardTitle>
-          <CardDescription>Weight sensor monitoring for IoT integration</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            {shelves.map((shelf) => (
-              <div key={shelf.id} className="p-4 bg-muted/50 rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-semibold">Shelf {shelf.shelf_number}</h4>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    shelf.is_active ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
-                  }`}>
-                    {shelf.is_active ? "Active" : "Inactive"}
-                  </span>
-                </div>
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  <p>Current Weight: {shelf.current_weight}g</p>
-                  <p>Max Capacity: {shelf.max_weight}g</p>
-                  <div className="w-full bg-muted rounded-full h-2 mt-2">
-                    <div
-                      className="bg-primary h-2 rounded-full transition-smooth"
-                      style={{ width: `${(shelf.current_weight / shelf.max_weight) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Real-time IoT Shelf Monitor */}
+      <ShelfMonitor />
     </div>
   );
 };

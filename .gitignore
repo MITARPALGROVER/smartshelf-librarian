@@ -1,4 +1,6 @@
 # Logs
+DEPLOYMENT.MD
+/arduino
 logs
 *.log
 npm-debug.log*

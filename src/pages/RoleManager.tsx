@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,40 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserCog, ShieldCheck } from "lucide-react";
+import { UserCog, ShieldCheck, Users } from "lucide-react";
 
 const RoleManager = () => {
   const [email, setEmail] = useState("");
   const [newRole, setNewRole] = useState<"student" | "librarian" | "admin">("student");
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [showUsers, setShowUsers] = useState(false);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    // First try to load from profiles
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(`
+        id, 
+        email, 
+        full_name, 
+        student_id,
+        user_roles(role)
+      `)
+      .order("created_at", { ascending: false });
+
+    console.log("Load users result:", { data, error });
+
+    if (!error && data) {
+      setUsers(data);
+    } else {
+      console.error("Error loading users:", error);
+    }
+  };
 
   const handleAssignRole = async () => {
     if (!email) {
@@ -28,18 +56,35 @@ const RoleManager = () => {
     setLoading(true);
 
     try {
-      // Find user by email
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", email)
-        .single();
+      // Trim and lowercase the email to handle case sensitivity
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      console.log("Searching for user with email:", normalizedEmail);
 
-      if (profileError || !profile) {
-        toast.error("User not found with that email");
+      // Find user by email (case-insensitive)
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .ilike("email", normalizedEmail);
+
+      console.log("Profile search result:", { profiles, profileError });
+
+      // Check if we got any results
+      if (profileError) {
+        console.error("Profile error details:", profileError);
+        toast.error("Error searching for user. Check console for details.");
         setLoading(false);
         return;
       }
+
+      if (!profiles || profiles.length === 0) {
+        toast.error(`No user found with email: ${normalizedEmail}. The user may need to sign up first.`);
+        setLoading(false);
+        return;
+      }
+
+      const profile = profiles[0];
+      console.log("Found user:", profile.full_name, profile.email);
 
       // Check if role already exists
       const { data: existingRole } = await supabase
@@ -67,8 +112,10 @@ const RoleManager = () => {
         console.error("Role assignment error:", roleError);
         toast.error("Failed to assign role. Make sure you have admin privileges.");
       } else {
-        toast.success(`Successfully assigned ${newRole} role to ${email}`);
+        toast.success(`Successfully assigned ${newRole} role to ${profile.full_name || profile.email}`);
+        console.log("Role assigned successfully!");
         setEmail("");
+        loadUsers(); // Refresh user list
       }
     } catch (error: any) {
       console.error("Error:", error);
@@ -154,6 +201,52 @@ const RoleManager = () => {
               <li>Select your user_id and role "admin"</li>
               <li>Click "Save" and refresh this page</li>
             </ol>
+          </div>
+
+          {/* User List */}
+          <div className="border-t pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowUsers(!showUsers)}
+              className="w-full mb-3"
+            >
+              <Users className="mr-2 h-4 w-4" />
+              {showUsers ? "Hide" : "Show"} All Users ({users.length})
+            </Button>
+
+            {showUsers && (
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {users.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No users found
+                  </p>
+                ) : (
+                  users.map((user) => (
+                    <div
+                      key={user.id}
+                      className="bg-muted/30 rounded p-3 text-sm hover:bg-muted/50 cursor-pointer"
+                      onClick={() => setEmail(user.email)}
+                    >
+                      <div className="font-medium">{user.full_name || "No name"}</div>
+                      <div className="text-xs text-muted-foreground">{user.email}</div>
+                      {user.student_id && (
+                        <div className="text-xs text-muted-foreground">ID: {user.student_id}</div>
+                      )}
+                      <div className="flex gap-1 mt-1">
+                        {user.user_roles?.map((r: any, i: number) => (
+                          <span
+                            key={i}
+                            className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded"
+                          >
+                            {r.role}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

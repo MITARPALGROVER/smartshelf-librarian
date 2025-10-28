@@ -97,29 +97,29 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-subtle p-4">
+    <div className="min-h-screen flex items-center justify-center gradient-subtle p-3 sm:p-4">
       <Card className="w-full max-w-md shadow-elegant">
-        <CardHeader className="text-center space-y-2">
-          <div className="flex justify-center mb-4">
-            <div className="gradient-primary p-4 rounded-full">
-              <BookOpen className="h-12 w-12 text-white" />
+        <CardHeader className="text-center space-y-2 px-4 sm:px-6">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <div className="gradient-primary p-3 sm:p-4 rounded-full">
+              <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-white" />
             </div>
           </div>
-          <CardTitle className="text-3xl">Smart Library</CardTitle>
-          <CardDescription>IoT-Powered Library Management System</CardDescription>
+          <CardTitle className="text-2xl sm:text-3xl">Smart Library</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">IoT-Powered Library Management System</CardDescription>
         </CardHeader>
         
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mx-6">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+        <Tabs defaultValue="login" className="w-full px-4 sm:px-6">
+          <TabsList className="grid w-full grid-cols-2 h-9 sm:h-10">
+            <TabsTrigger value="login" className="text-xs sm:text-sm">Login</TabsTrigger>
+            <TabsTrigger value="signup" className="text-xs sm:text-sm">Sign Up</TabsTrigger>
           </TabsList>
           
           <TabsContent value="login">
             <form onSubmit={handleLogin}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+              <CardContent className="space-y-3 sm:space-y-4 px-0">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="login-email" className="text-xs sm:text-sm">Email</Label>
                   <Input
                     id="login-email"
                     type="email"
@@ -127,10 +127,11 @@ const Auth = () => {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     disabled={loading}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="login-password" className="text-xs sm:text-sm">Password</Label>
                   <Input
                     id="login-password"
                     type="password"
@@ -138,18 +139,19 @@ const Auth = () => {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     disabled={loading}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={loading}>
+              <CardFooter className="px-0">
+                <Button type="submit" className="w-full h-9 sm:h-10 text-sm" disabled={loading}>
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Logging in...
+                      <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                      <span className="text-xs sm:text-sm">Logging in...</span>
                     </>
                   ) : (
-                    "Login"
+                    <span className="text-xs sm:text-sm">Login</span>
                   )}
                 </Button>
               </CardFooter>
@@ -158,9 +160,9 @@ const Auth = () => {
           
           <TabsContent value="signup">
             <form onSubmit={handleSignup}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name *</Label>
+              <CardContent className="space-y-3 sm:space-y-4 px-0">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="signup-name" className="text-xs sm:text-sm">Full Name *</Label>
                   <Input
                     id="signup-name"
                     type="text"
@@ -168,10 +170,11 @@ const Auth = () => {
                     value={signupFullName}
                     onChange={(e) => setSignupFullName(e.target.value)}
                     disabled={loading}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-student-id">Student ID (Optional)</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="signup-student-id" className="text-xs sm:text-sm">Student ID (Optional)</Label>
                   <Input
                     id="signup-student-id"
                     type="text"
@@ -179,10 +182,11 @@ const Auth = () => {
                     value={signupStudentId}
                     onChange={(e) => setSignupStudentId(e.target.value)}
                     disabled={loading}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email *</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="signup-email" className="text-xs sm:text-sm">Email *</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -190,10 +194,11 @@ const Auth = () => {
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     disabled={loading}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password *</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="signup-password" className="text-xs sm:text-sm">Password *</Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -201,18 +206,19 @@ const Auth = () => {
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
                     disabled={loading}
+                    className="h-9 sm:h-10 text-sm"
                   />
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={loading} variant="accent">
+              <CardFooter className="px-0">
+                <Button type="submit" className="w-full h-9 sm:h-10 text-sm" disabled={loading} variant="accent">
                   {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
+                      <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                      <span className="text-xs sm:text-sm">Creating account...</span>
                     </>
                   ) : (
-                    "Create Account"
+                    <span className="text-xs sm:text-sm">Create Account</span>
                   )}
                 </Button>
               </CardFooter>
