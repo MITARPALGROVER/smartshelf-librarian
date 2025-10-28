@@ -35,12 +35,12 @@ interface Reservation {
     author: string;
     shelves: {
       shelf_number: number;
-    };
-  };
+    } | null;
+  } | null;
   profiles: {
     full_name: string;
     email: string;
-  };
+  } | null;
 }
 
 const LibrarianDashboard = () => {
@@ -90,14 +90,18 @@ const LibrarianDashboard = () => {
   }, []);
 
   const fetchData = async () => {
+    console.log('🔄 Fetching librarian dashboard data...');
+    
     // Fetch all currently issued books (not returned)
-    const { data: booksData } = await supabase
+    const { data: booksData, error: booksError } = await supabase
       .from("issued_books")
       .select(`
         id,
         issued_at,
         due_date,
         returned_at,
+        book_id,
+        user_id,
         books (
           title,
           author
@@ -111,17 +115,27 @@ const LibrarianDashboard = () => {
       .is("returned_at", null)
       .order("issued_at", { ascending: false });
 
+    if (booksError) {
+      console.error('❌ Error fetching issued books:', booksError);
+      toast.error('Failed to load issued books');
+    } else {
+      console.log('✅ Issued books:', booksData);
+    }
+
     // Fetch active reservations
-    const { data: reservationsData } = await supabase
+    const { data: reservationsData, error: reservationsError } = await supabase
       .from("reservations")
       .select(`
         id,
         reserved_at,
         expires_at,
         status,
+        book_id,
+        user_id,
         books (
           title,
           author,
+          shelf_id,
           shelves (
             shelf_number
           )
@@ -133,6 +147,13 @@ const LibrarianDashboard = () => {
       `)
       .eq("status", "active")
       .order("reserved_at", { ascending: false });
+
+    if (reservationsError) {
+      console.error('❌ Error fetching reservations:', reservationsError);
+      toast.error('Failed to load reservations');
+    } else {
+      console.log('✅ Active reservations:', reservationsData);
+    }
 
     if (booksData) {
       setIssuedBooks(booksData as IssuedBook[]);
@@ -234,8 +255,12 @@ const LibrarianDashboard = () => {
                 <div key={reservation.id} className="p-3 sm:p-4 bg-warning/10 border border-warning/20 rounded-lg">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-sm sm:text-base truncate">{reservation.books?.title || 'Unknown Book'}</h4>
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{reservation.books?.author || 'Unknown Author'}</p>
+                      <h4 className="font-semibold text-sm sm:text-base truncate">
+                        {reservation.books?.title || 'Unknown Book'}
+                      </h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                        {reservation.books?.author || 'Unknown Author'}
+                      </p>
                       <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
                         Student: {reservation.profiles?.full_name || reservation.profiles?.email || 'Unknown User'}
                       </p>
@@ -245,6 +270,9 @@ const LibrarianDashboard = () => {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
+                    Reserved {formatDistanceToNow(new Date(reservation.reserved_at), { addSuffix: true })}
+                  </p>
+                  <p className="text-xs text-warning font-medium">
                     Expires {formatDistanceToNow(new Date(reservation.expires_at), { addSuffix: true })}
                   </p>
                 </div>

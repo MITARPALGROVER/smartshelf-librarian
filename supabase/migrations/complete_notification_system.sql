@@ -63,7 +63,10 @@ BEGIN
 
       -- Notify ALL librarians about the mistake
       FOR librarian_record IN 
-        SELECT id, email FROM profiles WHERE role = 'librarian'
+        SELECT DISTINCT p.id, p.email 
+        FROM profiles p
+        JOIN user_roles ur ON ur.user_id = p.id
+        WHERE ur.role = 'librarian'
       LOOP
         INSERT INTO notifications (user_id, type, title, message, metadata)
         VALUES (
@@ -94,7 +97,10 @@ BEGIN
     
     -- Notify all librarians and admins
     FOR librarian_record IN 
-      SELECT id, email FROM profiles WHERE role IN ('librarian', 'admin')
+      SELECT DISTINCT p.id, p.email 
+      FROM profiles p
+      JOIN user_roles ur ON ur.user_id = p.id
+      WHERE ur.role IN ('librarian', 'admin')
     LOOP
       INSERT INTO notifications (user_id, type, title, message, metadata)
       VALUES (
@@ -173,7 +179,10 @@ BEGIN
     
     -- Notify ALL librarians about the book pickup
     FOR librarian_record IN 
-      SELECT id, email FROM profiles WHERE role = 'librarian'
+      SELECT DISTINCT p.id, p.email 
+      FROM profiles p
+      JOIN user_roles ur ON ur.user_id = p.id
+      WHERE ur.role = 'librarian'
     LOOP
       INSERT INTO notifications (user_id, type, title, message, metadata)
       VALUES (
@@ -263,7 +272,10 @@ BEGIN
     
     -- Notify ALL librarians about the reservation
     FOR librarian_record IN 
-      SELECT id, email FROM profiles WHERE role = 'librarian'
+      SELECT DISTINCT p.id, p.email 
+      FROM profiles p
+      JOIN user_roles ur ON ur.user_id = p.id
+      WHERE ur.role = 'librarian'
     LOOP
       INSERT INTO notifications (user_id, type, title, message, metadata)
       VALUES (

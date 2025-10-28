@@ -170,6 +170,20 @@ const Layout = ({ children }: LayoutProps) => {
                     🧪 Testing Panel
                   </Button>
                   
+                  {/* Librarian/Admin: Borrowed Books Report */}
+                  {(role === "librarian" || role === "admin") && (
+                    <Button
+                      variant={location.pathname === "/reports/borrowed-books" ? "default" : "ghost"}
+                      onClick={() => {
+                        navigate("/reports/borrowed-books");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full justify-start"
+                    >
+                      📊 Borrowed Books
+                    </Button>
+                  )}
+                  
                   {/* Sign Out */}
                   <div className="pt-4 border-t">
                     <Button
@@ -217,6 +231,11 @@ const Layout = ({ children }: LayoutProps) => {
                 <DropdownMenuItem onClick={() => navigate("/testing")}>
                   🧪 Testing Panel
                 </DropdownMenuItem>
+                {(role === "librarian" || role === "admin") && (
+                  <DropdownMenuItem onClick={() => navigate("/reports/borrowed-books")}>
+                    📊 Borrowed Books Report
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />

@@ -14,6 +14,7 @@ import LibrarianDashboard from "./pages/LibrarianDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import RoleManager from "./pages/RoleManager";
 import TestingPanel from "./pages/TestingPanel";
+import BorrowedBooksReport from "./pages/BorrowedBooksReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -74,6 +75,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <TestingPanel />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports/borrowed-books"
+              element={
+                <ProtectedRoute requiredRole="librarian">
+                  <Layout>
+                    <BorrowedBooksReport />
                   </Layout>
                 </ProtectedRoute>
               }
