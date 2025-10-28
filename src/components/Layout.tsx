@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, User, LogOut, LayoutDashboard, BookMarked, Menu, X } from "lucide-react";
 import { signOut } from "@/lib/supabase";
 import { toast } from "sonner";
+import NotificationBell from "@/components/NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,6 +106,9 @@ const Layout = ({ children }: LayoutProps) => {
 
           {/* Mobile + Desktop User Menu */}
           <div className="flex items-center gap-2">
+            {/* Notification Bell */}
+            <NotificationBell />
+            
             {/* Mobile Menu Button */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild className="md:hidden">
@@ -155,6 +159,16 @@ const Layout = ({ children }: LayoutProps) => {
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     Dashboard
                   </Button>
+                  <Button
+                    variant={location.pathname === "/testing" ? "default" : "ghost"}
+                    onClick={() => {
+                      navigate("/testing");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start"
+                  >
+                    🧪 Testing Panel
+                  </Button>
                   
                   {/* Sign Out */}
                   <div className="pt-4 border-t">
@@ -199,6 +213,9 @@ const Layout = ({ children }: LayoutProps) => {
                 <DropdownMenuItem onClick={() => navigate("/")}>
                   <BookMarked className="mr-2 h-4 w-4" />
                   Browse Books
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/testing")}>
+                  🧪 Testing Panel
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
