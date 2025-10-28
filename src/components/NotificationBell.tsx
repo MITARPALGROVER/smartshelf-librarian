@@ -109,7 +109,7 @@ const NotificationBell = () => {
       case 'warning':
         return '⚠️';
       default:
-        return 'ℹ️';
+        return '📖';
     }
   };
 
@@ -124,6 +124,84 @@ const NotificationBell = () => {
       default:
         return 'border-l-primary bg-primary/5';
     }
+  };
+
+  const renderNotificationDetails = (notification: Notification) => {
+    const metadata = notification.metadata as any;
+    
+    if (!metadata) return null;
+
+    return (
+      <div className="mt-2 space-y-1 text-xs bg-muted/50 rounded p-2">
+        {metadata.book_title && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Book:</span>
+            <span className="font-medium">{metadata.book_title}</span>
+          </div>
+        )}
+        {metadata.book_author && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Author:</span>
+            <span>{metadata.book_author}</span>
+          </div>
+        )}
+        {metadata.shelf_number !== undefined && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Shelf:</span>
+            <span className="font-medium">Shelf {metadata.shelf_number}</span>
+          </div>
+        )}
+        {metadata.student_name && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Student:</span>
+            <span className="font-medium">{metadata.student_name}</span>
+          </div>
+        )}
+        {metadata.student_email && !metadata.student_name && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Student:</span>
+            <span className="font-medium text-xs">{metadata.student_email}</span>
+          </div>
+        )}
+        {metadata.correct_shelf && metadata.wrong_shelf && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Expected:</span>
+            <span className="font-medium text-green-600">Shelf {metadata.correct_shelf}</span>
+            <span className="text-muted-foreground">→</span>
+            <span className="font-medium text-red-600">Got: Shelf {metadata.wrong_shelf}</span>
+          </div>
+        )}
+        {metadata.weight && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Weight:</span>
+            <span className="font-medium">{metadata.weight}g</span>
+          </div>
+        )}
+        {metadata.due_date && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Due:</span>
+            <span className="font-medium">
+              {new Date(metadata.due_date).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+              })}
+            </span>
+          </div>
+        )}
+        {metadata.expires_at && (
+          <div className="flex gap-2">
+            <span className="text-muted-foreground">Expires:</span>
+            <span className="font-medium text-orange-600">
+              {new Date(metadata.expires_at).toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })}
+            </span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (!user) return null;
@@ -201,7 +279,8 @@ const NotificationBell = () => {
                       <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      {renderNotificationDetails(notification)}
+                      <p className="text-xs text-muted-foreground mt-2">
                         {formatDistanceToNow(new Date(notification.created_at), {
                           addSuffix: true,
                         })}
