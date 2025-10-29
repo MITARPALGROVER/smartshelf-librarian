@@ -38,25 +38,48 @@ const NotificationBell = () => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Notification change:', payload);
+          console.log('🔔 Realtime notification event:', payload.eventType, payload);
           if (payload.eventType === 'INSERT') {
             const newNotif = payload.new as Notification;
-            setNotifications(prev => [newNotif, ...prev]);
-            setUnreadCount(prev => prev + 1);
+            console.log('📥 Adding notification to state:', newNotif);
+            
+            setNotifications(prev => {
+              const updated = [newNotif, ...prev];
+              console.log('📊 Updated notifications array:', updated.length, 'items');
+              return updated;
+            });
+            
+            setUnreadCount(prev => {
+              const newCount = prev + 1;
+              console.log('🔢 Updated unread count:', newCount);
+              return newCount;
+            });
             
             // Show toast notification
+            console.log('🍞 Showing toast notification');
             toast(newNotif.title, {
               description: newNotif.message,
               duration: 5000,
             });
+          } else if (payload.eventType === 'UPDATE') {
+            // Handle mark as read updates
+            fetchNotifications();
           } else {
             fetchNotifications();
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔔 Notification channel status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to real-time notifications');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error subscribing to notifications channel');
+        }
+      });
 
     return () => {
+      console.log('🔔 Unsubscribing from notifications channel');
       supabase.removeChannel(channel);
     };
   }, [user]);

@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import ShelfMonitor from "@/components/ShelfMonitor";
 import ShelfAlerts from "@/components/ShelfAlerts";
+import { RefreshCw } from "lucide-react";
 
 interface IssuedBook {
   id: string;
@@ -91,6 +92,7 @@ const LibrarianDashboard = () => {
 
   const fetchData = async () => {
     console.log('🔄 Fetching librarian dashboard data...');
+    setLoading(true);
     
     // Fetch all currently issued books (not returned)
     const { data: booksData, error: booksError } = await supabase
@@ -102,11 +104,11 @@ const LibrarianDashboard = () => {
         returned_at,
         book_id,
         user_id,
-        books (
+        books!inner (
           title,
           author
         ),
-        profiles (
+        profiles!inner (
           full_name,
           email,
           student_id
@@ -119,7 +121,8 @@ const LibrarianDashboard = () => {
       console.error('❌ Error fetching issued books:', booksError);
       toast.error('Failed to load issued books');
     } else {
-      console.log('✅ Issued books:', booksData);
+      console.log('✅ Issued books data:', booksData);
+      console.log('✅ Number of issued books:', booksData?.length || 0);
     }
 
     // Fetch active reservations
@@ -132,7 +135,7 @@ const LibrarianDashboard = () => {
         status,
         book_id,
         user_id,
-        books (
+        books!inner (
           title,
           author,
           shelf_id,
@@ -140,7 +143,7 @@ const LibrarianDashboard = () => {
             shelf_number
           )
         ),
-        profiles (
+        profiles!inner (
           full_name,
           email
         )
@@ -152,7 +155,8 @@ const LibrarianDashboard = () => {
       console.error('❌ Error fetching reservations:', reservationsError);
       toast.error('Failed to load reservations');
     } else {
-      console.log('✅ Active reservations:', reservationsData);
+      console.log('✅ Active reservations data:', reservationsData);
+      console.log('✅ Number of active reservations:', reservationsData?.length || 0);
     }
 
     if (booksData) {
@@ -198,9 +202,22 @@ const LibrarianDashboard = () => {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Librarian Dashboard</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Monitor all library activities and manage book returns</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Librarian Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Monitor all library activities and manage book returns</p>
+        </div>
+        <Button 
+          onClick={() => {
+            fetchData();
+            toast.success('Dashboard refreshed');
+          }}
+          variant="outline"
+          size="sm"
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

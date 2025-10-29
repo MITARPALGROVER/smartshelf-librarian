@@ -167,7 +167,7 @@ const ShelfMonitor = () => {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs sm:text-sm font-medium">Current Weight</span>
                     <span className="text-xl sm:text-2xl font-bold text-primary">
-                      {shelf.current_weight.toFixed(1)}g
+                      {(shelf.current_weight ?? 0).toFixed(1)}g
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
@@ -186,16 +186,16 @@ const ShelfMonitor = () => {
                     </div>
                     <div className="flex items-center justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Actual weight:</span>
-                      <span className="font-medium">{shelf.current_weight.toFixed(1)}g</span>
+                      <span className="font-medium">{(shelf.current_weight ?? 0).toFixed(1)}g</span>
                     </div>
                     <div className="flex items-center justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Difference:</span>
                       <span className={`font-medium ${
-                        Math.abs(totalBookWeight - shelf.current_weight) > 50 
+                        Math.abs(totalBookWeight - (shelf.current_weight ?? 0)) > 50 
                           ? 'text-warning' 
                           : 'text-success'
                       }`}>
-                        {Math.abs(totalBookWeight - shelf.current_weight).toFixed(1)}g
+                        {Math.abs(totalBookWeight - (shelf.current_weight ?? 0)).toFixed(1)}g
                       </span>
                     </div>
                   </div>

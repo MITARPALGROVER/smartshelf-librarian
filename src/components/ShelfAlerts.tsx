@@ -179,7 +179,7 @@ const ShelfAlerts = () => {
                     {formatDistanceToNow(new Date(alert.detected_at), { addSuffix: true })}
                   </span>
                   <span className="hidden sm:inline">•</span>
-                  <span>{alert.weight_change.toFixed(0)}g</span>
+                  <span>{(alert.weight_change ?? 0).toFixed(0)}g</span>
                 </div>
               </div>
               <Button

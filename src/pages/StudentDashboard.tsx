@@ -64,7 +64,13 @@ const StudentDashboard = () => {
             table: 'reservations',
             filter: `user_id=eq.${user.id}`
           },
-          () => fetchData()
+          (payload) => {
+            console.log('🔔 Reservation change detected:', payload);
+            if (payload.eventType === 'UPDATE' && payload.new.status === 'completed') {
+              console.log('✅ Reservation completed - removing from list');
+            }
+            fetchData();
+          }
         )
         .subscribe();
 
@@ -78,7 +84,13 @@ const StudentDashboard = () => {
             table: 'issued_books',
             filter: `user_id=eq.${user.id}`
           },
-          () => fetchData()
+          (payload) => {
+            console.log('📖 Issued book change detected:', payload);
+            if (payload.eventType === 'INSERT') {
+              console.log('✅ New book issued - adding to borrowed list');
+            }
+            fetchData();
+          }
         )
         .subscribe();
 
