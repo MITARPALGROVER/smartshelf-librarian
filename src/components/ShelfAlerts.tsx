@@ -52,25 +52,19 @@ const ShelfAlerts = () => {
   }, []);
 
   const fetchAlerts = async () => {
-    // Use RPC call to fetch alerts (bypasses TypeScript type issues)
+    // Fetch recent unresolved alerts with a limit
     const { data, error } = await (supabase as any)
-      .rpc('get_unresolved_shelf_alerts');
+      .from('shelf_alerts')
+      .select('*')
+      .is('resolved_at', null)
+      .order('detected_at', { ascending: false })
+      .limit(10); // Only show last 10 alerts
 
     if (error) {
       console.error('Error fetching alerts:', error);
-    } else if (data && Array.isArray(data)) {
-      const formattedAlerts = data.map((alert: any) => ({
-        id: alert.alert_id,
-        shelf_id: '', // Not needed for display
-        shelf_number: alert.shelf_number,
-        alert_type: alert.alert_type,
-        message: alert.message,
-        weight_change: alert.weight_change,
-        detected_at: alert.detected_at,
-        resolved_at: null,
-        resolved_by: null
-      }));
-      setAlerts(formattedAlerts);
+      toast.error('Failed to load shelf alerts');
+    } else if (data) {
+      setAlerts(data);
     }
 
     setLoading(false);
@@ -81,12 +75,14 @@ const ShelfAlerts = () => {
     
     setResolving(alertId);
 
-    // Use RPC call to resolve alert
+    // Mark alert as resolved
     const { error } = await (supabase as any)
-      .rpc('resolve_shelf_alert', {
-        alert_id: alertId,
-        resolver_id: user.id
-      });
+      .from('shelf_alerts')
+      .update({
+        resolved_at: new Date().toISOString(),
+        resolved_by: user.id
+      })
+      .eq('id', alertId);
 
     if (error) {
       toast.error('Failed to resolve alert');

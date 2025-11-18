@@ -251,29 +251,30 @@ const BorrowedBooksReport = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Borrowed Books Report</h1>
-          <p className="text-muted-foreground">Complete list of all book borrowing activities</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Borrowed Books Report</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Complete list of all book borrowing activities</p>
         </div>
-        <Button onClick={exportToCSV} variant="outline">
+        <Button onClick={exportToCSV} variant="outline" size="sm" className="w-full sm:w-auto">
           <Download className="mr-2 h-4 w-4" />
           Export CSV
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Total Students
+          <CardHeader className="p-3 sm:p-6 pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Total Students</span>
+              <span className="sm:hidden">Students</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{studentSummaries.length}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{studentSummaries.length}</div>
           </CardContent>
         </Card>
 
@@ -322,27 +323,26 @@ const BorrowedBooksReport = () => {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle>Filter & Search</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Filter & Search</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by book, student name, email, or student ID..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+        <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by book, student name, email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 text-sm"
+              />
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <Button
                 variant={filterType === "all" ? "default" : "outline"}
                 onClick={() => setFilterType("all")}
                 size="sm"
+                className="text-xs"
               >
                 All ({allRecords.length})
               </Button>
@@ -350,6 +350,7 @@ const BorrowedBooksReport = () => {
                 variant={filterType === "active" ? "default" : "outline"}
                 onClick={() => setFilterType("active")}
                 size="sm"
+                className="text-xs"
               >
                 <Clock className="mr-1 h-3 w-3" />
                 Active ({allRecords.filter(r => !r.returned_at).length})
@@ -358,6 +359,7 @@ const BorrowedBooksReport = () => {
                 variant={filterType === "returned" ? "default" : "outline"}
                 onClick={() => setFilterType("returned")}
                 size="sm"
+                className="text-xs"
               >
                 <CheckCircle className="mr-1 h-3 w-3" />
                 Returned ({allRecords.filter(r => r.returned_at).length})
@@ -366,6 +368,7 @@ const BorrowedBooksReport = () => {
                 variant={filterType === "overdue" ? "default" : "outline"}
                 onClick={() => setFilterType("overdue")}
                 size="sm"
+                className="text-xs"
               >
                 <AlertCircle className="mr-1 h-3 w-3" />
                 Overdue ({allRecords.filter(r => r.is_overdue).length})

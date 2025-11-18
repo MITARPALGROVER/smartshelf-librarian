@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, Clock, CheckCircle, Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BookOpen, Users, Clock, CheckCircle, Activity, X, QrCode } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import ShelfMonitor from "@/components/ShelfMonitor";
 import ShelfAlerts from "@/components/ShelfAlerts";
+import { ShelfDoorControl } from "@/components/ShelfDoorControl";
 import { RefreshCw } from "lucide-react";
 
 interface IssuedBook {
@@ -32,6 +34,7 @@ interface Reservation {
   expires_at: string;
   status: string;
   books: {
+    id: string;
     title: string;
     author: string;
     shelves: {
@@ -136,6 +139,7 @@ const LibrarianDashboard = () => {
         book_id,
         user_id,
         books!inner (
+          id,
           title,
           author,
           shelf_id,
@@ -194,6 +198,35 @@ const LibrarianDashboard = () => {
       toast.success("Book marked as returned");
       fetchData();
     }
+  };
+
+  const handleCancelReservation = async (reservationId: string, bookId: string) => {
+    // Update reservation status to cancelled
+    const { error: reservationError } = await supabase
+      .from("reservations")
+      .update({ status: "cancelled" })
+      .eq("id", reservationId);
+
+    if (reservationError) {
+      toast.error("Failed to cancel reservation");
+      console.error("Reservation error:", reservationError);
+      return;
+    }
+
+    // Update book status back to available
+    const { error: bookError } = await supabase
+      .from("books")
+      .update({ status: "available" })
+      .eq("id", bookId);
+
+    if (bookError) {
+      toast.error("Failed to update book status");
+      console.error("Book error:", bookError);
+      return;
+    }
+
+    toast.success("Reservation cancelled successfully");
+    fetchData();
   };
 
   if (loading) {
@@ -282,9 +315,20 @@ const LibrarianDashboard = () => {
                         Student: {reservation.profiles?.full_name || reservation.profiles?.email || 'Unknown User'}
                       </p>
                     </div>
-                    <Badge variant="outline" className="border-warning text-warning self-start sm:self-auto text-xs">
-                      Shelf {reservation.books?.shelves?.shelf_number || 'N/A'}
-                    </Badge>
+                    <div className="flex items-start gap-2">
+                      <Badge variant="outline" className="border-warning text-warning self-start sm:self-auto text-xs">
+                        Shelf {reservation.books?.shelves?.shelf_number || 'N/A'}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleCancelReservation(reservation.id, reservation.books?.id || '')}
+                        className="self-start sm:self-auto text-xs"
+                        title="Cancel this reservation"
+                      >
+                        <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Reserved {formatDistanceToNow(new Date(reservation.reserved_at), { addSuffix: true })}
@@ -350,11 +394,26 @@ const LibrarianDashboard = () => {
         </Card>
       </div>
 
-      {/* Shelf Alerts - Wrong books, unknown objects */}
-      <ShelfAlerts />
-
-      {/* Real-time IoT Shelf Monitor */}
-      <ShelfMonitor />
+      {/* Tabbed Interface for Shelf Management */}
+      <Tabs defaultValue="alerts" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="alerts">Shelf Alerts</TabsTrigger>
+          <TabsTrigger value="monitor">IoT Monitor</TabsTrigger>
+          <TabsTrigger value="doors" className="flex items-center gap-2">
+            <QrCode className="w-4 h-4" />
+            Door Control
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="alerts">
+          <ShelfAlerts />
+        </TabsContent>
+        <TabsContent value="monitor">
+          <ShelfMonitor />
+        </TabsContent>
+        <TabsContent value="doors">
+          <ShelfDoorControl />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -4,9 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, MapPin, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BookOpen, MapPin, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { QRScanner } from "./QRScanner";
 
 interface Book {
   id: string;
@@ -29,96 +31,41 @@ interface BookCardProps {
 const BookCard = ({ book, onReservationChange }: BookCardProps) => {
   const { user, role } = useAuth();
   const navigate = useNavigate();
-  const [reserving, setReserving] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
-  const handleReserve = async () => {
+  const handlePickup = () => {
     if (!user) {
-      toast.error("Please login to reserve books");
+      toast.error("Please login to pickup books");
       navigate("/auth");
       return;
     }
 
     if (role !== "student") {
-      toast.error("Only students can reserve books");
+      toast.error("Only students can pickup books");
       return;
     }
 
-    setReserving(true);
+    // Get shelf information
+    if (!book.shelves) {
+      toast.error("Shelf information not available for this book");
+      return;
+    }
 
-    try {
-      // Check if user already has an active reservation for this book
-      const { data: existingReservation } = await supabase
-        .from("reservations")
-        .select("id, expires_at")
-        .eq("book_id", book.id)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .maybeSingle();
+    // Open QR scanner dialog
+    setShowQRScanner(true);
+  };
 
-      if (existingReservation) {
-        // Check if reservation is actually expired
-        const expiryTime = new Date(existingReservation.expires_at);
-        const now = new Date();
-        
-        if (expiryTime > now) {
-          // Still active and not expired
-          toast.error("You already have an active reservation for this book");
-          setReserving(false);
-          return;
-        } else {
-          // Expired - update it to expired status
-          await supabase
-            .from("reservations")
-            .update({ status: "expired" })
-            .eq("id", existingReservation.id);
-          
-          // Also set book back to available if it's still reserved
-          await supabase
-            .from("books")
-            .update({ status: "available" })
-            .eq("id", book.id)
-            .eq("status", "reserved");
-        }
-      }
+  const handleQRSuccess = async () => {
+    setShowQRScanner(false);
+    
+    // Book will be issued automatically by weight sensor
+    toast.success(
+      `Door unlocked! You have 1 minute to pick up "${book.title}" from Shelf ${book.shelves?.shelf_number}`,
+      { duration: 8000 }
+    );
 
-      // Create reservation (expires in 5 minutes)
-      const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-
-      const { error: reservationError } = await supabase
-        .from("reservations")
-        .insert({
-          book_id: book.id,
-          user_id: user.id,
-          expires_at: expiresAt.toISOString(),
-          status: "active"
-        });
-
-      if (reservationError) throw reservationError;
-
-      // Update book status to reserved
-      const { error: updateError } = await supabase
-        .from("books")
-        .update({ status: "reserved" })
-        .eq("id", book.id);
-
-      if (updateError) throw updateError;
-
-      toast.success(
-        `Book reserved! You have 5 minutes to pick it up from Shelf ${book.shelves?.shelf_number}`,
-        { duration: 5000 }
-      );
-
-      if (onReservationChange) {
-        onReservationChange();
-      }
-
-      navigate("/student");
-    } catch (error: any) {
-      console.error("Reservation error:", error);
-      toast.error(error.message || "Failed to reserve book");
-    } finally {
-      setReserving(false);
+    if (onReservationChange) {
+      onReservationChange();
     }
   };
 
@@ -176,24 +123,33 @@ const BookCard = ({ book, onReservationChange }: BookCardProps) => {
       
       <CardFooter className="p-3 sm:p-4 pt-0">
         {book.status === "available" && role === "student" ? (
-          <Button
-            onClick={handleReserve}
-            disabled={reserving}
-            className="w-full h-9 sm:h-10 text-xs sm:text-sm"
-            variant="accent"
-          >
-            {reserving ? (
-              <>
-                <Clock className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                Reserving...
-              </>
-            ) : (
-              <>
-                <Clock className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                Reserve (5 min)
-              </>
-            )}
-          </Button>
+          <>
+            <Button
+              onClick={handlePickup}
+              className="w-full h-9 sm:h-10 text-xs sm:text-sm"
+              variant="accent"
+            >
+              <QrCode className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              Scan QR to Pickup
+            </Button>
+
+            <Dialog open={showQRScanner} onOpenChange={setShowQRScanner}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Scan Shelf QR Code</DialogTitle>
+                  <DialogDescription>
+                    Scan the QR code on Shelf {book.shelves?.shelf_number} to unlock the door and pickup "{book.title}"
+                  </DialogDescription>
+                </DialogHeader>
+                <QRScanner
+                  shelfId={book.shelves?.shelf_number?.toString() || ""}
+                  shelfNumber={book.shelves?.shelf_number || 0}
+                  bookId={book.id}
+                  onSuccess={handleQRSuccess}
+                />
+              </DialogContent>
+            </Dialog>
+          </>
         ) : book.status === "available" ? (
           <Button className="w-full h-9 sm:h-10 text-xs sm:text-sm" disabled>
             Available

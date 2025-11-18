@@ -12,6 +12,7 @@ interface Book {
   status: string;
   cover_image: string | null;
   description: string | null;
+  shelf_id?: string;
   shelves: {
     shelf_number: number;
   } | null;
@@ -71,6 +72,7 @@ const BooksPage = () => {
         status,
         cover_image,
         description,
+        shelf_id,
         shelves (
           shelf_number
         )
