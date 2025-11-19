@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weight Sensor Calibration Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .step {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .step-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        .step-content {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(72, 187, 120, 0.4);
+        }
+        .btn-secondary {
+            background: #edf2f7;
+            color: #2d3748;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .reading-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .reading-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        .reading-value {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .reading-unit {
+            font-size: 24px;
+            opacity: 0.8;
+        }
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+        }
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #f56565;
+        }
+        .alert-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #4299e1;
+        }
+        .alert-warning {
+            background: #feebc8;
+            color: #744210;
+            border-left: 4px solid #ed8936;
+        }
+        .weight-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .weight-example {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .weight-example:hover {
+            background: #edf2f7;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        .weight-example-emoji {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .weight-example-label {
+            font-size: 12px;
+            color: #4a5568;
+            margin-bottom: 4px;
+        }
+        .weight-example-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .status-online { background: #48bb78; }
+        .status-offline { background: #f56565; }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>⚖️ Weight Sensor Calibration Tool</h1>
+            <p class="subtitle">Follow the step-by-step process to calibrate your HX711 weight sensor</p>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+
+            <div id="alertBox" class="alert"></div>
+
+            <!-- Step 1: Connection -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Enter ESP8266 IP Address
+                </div>
+                <div class="step-content">
+                    <div class="input-group" style="margin-bottom: 10px;">
+                        <input type="text" id="ip" placeholder="e.g., 192.168.1.100" value="10.138.175.11">
+                    </div>
+                    <button class="btn-secondary" onclick="testConnection()">
+                        <span class="status-indicator" id="statusDot"></span>
+                        Test Connection
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Clear Shelf -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Clear the Shelf
+                </div>
+                <div class="step-content">
+                    Remove all items from the shelf. The scale was automatically zeroed (tared) when the ESP8266 started up.
+                    <div style="margin-top: 15px;">
+                        <button class="btn-secondary" onclick="readCurrentWeight()">
+                            📊 Check Current Weight
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Weight Display -->
+            <div id="currentWeightCard" style="display: none;">
+                <div class="reading-display">
+                    <div class="reading-label">Current Weight Reading</div>
+                    <div>
+                        <span class="reading-value" id="currentWeightValue">0.0</span>
+                        <span class="reading-unit">grams</span>
+                    </div>
+                    <div style="font-size: 14px; margin-top: 10px; opacity: 0.9;">
+                        Should be close to 0g when empty
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Known Weight -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Select or Enter Known Weight
+                </div>
+                <div class="step-content">
+                    <p style="margin-bottom: 15px;">Choose a common item or enter custom weight:</p>
+                    
+                    <div class="weight-examples">
+                        <div class="weight-example" onclick="selectWeight(171)">
+                            <div class="weight-example-emoji">📱</div>
+                            <div class="weight-example-label">iPhone 15</div>
+                            <div class="weight-example-value">171g</div>
+                        </div>
+                        <div class="weight-example" onclick="selectWeight(530)">
+                            <div class="weight-example-emoji">💧</div>
+                            <div class="weight-example-label">500ml Water</div>
+                            <div class="weight-example-value">530g</div>
+                        </div>
+                        <div class="weight-example" onclick="selectWeight(200)">
+                            <div class="weight-example-emoji">📚</div>
+                            <div class="weight-example-label">Paperback</div>
+                            <div class="weight-example-value">200g</div>
+                        </div>
+                        <div class="weight-example" onclick="selectWeight(1030)">
+                            <div class="weight-example-emoji">🍶</div>
+                            <div class="weight-example-label">1L Water</div>
+                            <div class="weight-example-value">1030g</div>
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 20px;">
+                        <label for="knownWeight">Or enter custom weight (grams):</label>
+                        <input type="number" id="knownWeight" placeholder="e.g., 530" step="0.1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Place Weight -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    Place Weight on Shelf
+                </div>
+                <div class="step-content">
+                    <p style="margin-bottom: 15px;">
+                        Place your known weight object on the shelf and wait 5-10 seconds for it to stabilize.
+                    </p>
+                    <button class="btn-secondary" onclick="readCurrentWeight()">
+                        📊 Check if Stable
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: Calibrate -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">5</span>
+                    Run Calibration
+                </div>
+                <div class="step-content">
+                    <p style="margin-bottom: 15px;">
+                        <strong>Make sure:</strong> Known weight is on the shelf and weight has stabilized
+                    </p>
+                    <button class="btn-success" onclick="calibrate()">
+                        ✨ Calibrate Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 6: Verify -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">6</span>
+                    Verify Calibration
+                </div>
+                <div class="step-content">
+                    <p style="margin-bottom: 15px;">
+                        Remove the weight, then place it back. It should read close to the known weight (±10g is normal).
+                    </p>
+                    <button class="btn-secondary" onclick="readCurrentWeight()">
+                        📊 Check Reading
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProgress = 0;
+
+        function updateProgress(percent) {
+            currentProgress = Math.min(100, percent);
+            document.getElementById('progress').style.width = currentProgress + '%';
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = `alert alert-${type} show`;
+            alertBox.textContent = message;
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 5000);
+        }
+
+        function getIP() {
+            return document.getElementById('ip').value.trim();
+        }
+
+        async function testConnection() {
+            const ip = getIP();
+            if (!ip) {
+                showAlert('Please enter an IP address', 'error');
+                return;
+            }
+
+            const statusDot = document.getElementById('statusDot');
+            statusDot.className = 'status-indicator';
+            
+            try {
+                const response = await fetch(`http://${ip}/status`, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDot.className = 'status-indicator status-online';
+                    showAlert(`✅ Connected! ESP8266 is online. Uptime: ${data.uptime}s`, 'success');
+                    updateProgress(20);
+                } else {
+                    statusDot.className = 'status-indicator status-offline';
+                    showAlert(`❌ Connection failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                statusDot.className = 'status-indicator status-offline';
+                showAlert(`❌ Cannot reach ESP8266. Check IP address and power.`, 'error');
+            }
+        }
+
+        async function readCurrentWeight() {
+            const ip = getIP();
+            if (!ip) {
+                showAlert('Please enter an IP address first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://${ip}/weight`, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    document.getElementById('currentWeightCard').style.display = 'block';
+                    document.getElementById('currentWeightValue').textContent = data.weight.toFixed(1);
+                    
+                    if (data.sensor_status === 'connected') {
+                        if (data.stable) {
+                            showAlert(`✅ Weight: ${data.weight.toFixed(1)}g (Stable)`, 'success');
+                        } else {
+                            showAlert(`⚠️ Weight: ${data.weight.toFixed(1)}g (Still stabilizing...)`, 'warning');
+                        }
+                        updateProgress(40);
+                    } else {
+                        showAlert(`❌ Sensor disconnected! Check wiring.`, 'error');
+                    }
+                } else {
+                    showAlert(`❌ Failed to read weight: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`❌ Cannot reach ESP8266: ${error.message}`, 'error');
+            }
+        }
+
+        function selectWeight(weight) {
+            document.getElementById('knownWeight').value = weight;
+            showAlert(`Selected ${weight}g. Now place this weight on the shelf.`, 'info');
+            updateProgress(60);
+        }
+
+        async function calibrate() {
+            const ip = getIP();
+            const knownWeight = parseFloat(document.getElementById('knownWeight').value);
+
+            if (!ip) {
+                showAlert('Please enter an IP address', 'error');
+                return;
+            }
+
+            if (!knownWeight || knownWeight <= 0) {
+                showAlert('Please enter a valid known weight in grams', 'error');
+                return;
+            }
+
+            showAlert(`⏳ Calibrating with ${knownWeight}g... Please wait...`, 'info');
+
+            try {
+                const response = await fetch(`http://${ip}/calibrate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ known_weight: knownWeight }),
+                    signal: AbortSignal.timeout(10000)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showAlert(
+                            `🎉 Calibration Successful! New factor: ${data.calibration_factor.toFixed(2)}`, 
+                            'success'
+                        );
+                        updateProgress(100);
+                        
+                        // Auto-verify after 2 seconds
+                        setTimeout(() => {
+                            showAlert('Now remove the weight and place it back to verify...', 'info');
+                        }, 2000);
+                    } else {
+                        showAlert(`❌ Calibration failed: ${data.message}`, 'error');
+                    }
+                } else {
+                    showAlert(`❌ Calibration request failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Load saved IP
+        const savedIP = localStorage.getItem('esp_ip');
+        if (savedIP) {
+            document.getElementById('ip').value = savedIP;
+        }
+
+        // Save IP on change
+        document.getElementById('ip').addEventListener('blur', (e) => {
+            localStorage.setItem('esp_ip', e.target.value);
+        });
+    </script>
+</body>
+</html>

@@ -11,10 +11,11 @@ interface QRScannerProps {
   shelfId: string;
   shelfNumber: number;
   bookId?: string;
+  isReturnMode?: boolean;
   onSuccess?: () => void;
 }
 
-export const QRScanner: React.FC<QRScannerProps> = ({ shelfId, shelfNumber, bookId, onSuccess }) => {
+export const QRScanner: React.FC<QRScannerProps> = ({ shelfId, shelfNumber, bookId, isReturnMode = false, onSuccess }) => {
   const [scanning, setScanning] = useState(false);
   const [scanner, setScanner] = useState<Html5Qrcode | null>(null);
   const [result, setResult] = useState<string | null>(null);
@@ -147,8 +148,9 @@ export const QRScanner: React.FC<QRScannerProps> = ({ shelfId, shelfNumber, book
     setLoading(true);
 
     try {
-      // Verify QR code matches the shelf
-      if (qrCode !== shelfId && qrCode !== shelfNumber.toString()) {
+      // For return mode, allow scanning ANY shelf QR code
+      // For pickup mode, must scan the correct shelf
+      if (!isReturnMode && qrCode !== shelfId && qrCode !== shelfNumber.toString()) {
         toast.error('❌ Wrong QR Code!', {
           description: `This is not the QR code for Shelf ${shelfNumber}. Please scan the correct shelf.`,
           duration: 5000,
@@ -162,23 +164,50 @@ export const QRScanner: React.FC<QRScannerProps> = ({ shelfId, shelfNumber, book
         return;
       }
 
-      // Get ESP8266 IP from shelves table
-      const { data: shelfData, error: shelfError } = await supabase
-        .from('shelves')
-        .select('*')
-        .eq('shelf_number', shelfNumber)
-        .single();
+      // Get shelf info from QR code
+      // Try to find shelf by UUID first, then by shelf_number
+      let shelfData: any = null;
+      let shelfError: any = null;
+
+      // First try: match by UUID (if QR code is a UUID)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(qrCode)) {
+        const { data, error } = await supabase
+          .from('shelves')
+          .select('*')
+          .eq('id', qrCode)
+          .single();
+        shelfData = data;
+        shelfError = error;
+      }
+      
+      // Second try: match by shelf_number
+      if (!shelfData) {
+        const { data, error } = await supabase
+          .from('shelves')
+          .select('*')
+          .eq('shelf_number', isReturnMode ? parseInt(qrCode) || shelfNumber : shelfNumber)
+          .single();
+        shelfData = data;
+        shelfError = error;
+      }
+
+      console.log('Shelf data from database:', shelfData);
+      console.log('Shelf query error:', shelfError);
 
       if (shelfError || !(shelfData as any)?.esp_ip_address) {
         toast.error('Shelf Configuration Error', {
-          description: 'ESP8266 IP address not configured for this shelf',
+          description: 'ESP8266 IP address not configured for this shelf. Please update the database with your ESP8266 IP address.',
         });
+        console.error('No ESP IP configured. Update database with: UPDATE shelves SET esp_ip_address = "10.138.175.11" WHERE shelf_number = 1;');
         setLoading(false);
         return;
       }
 
       const espIP = (shelfData as any).esp_ip_address;
       const actualShelfId = (shelfData as any).id; // Use the actual shelf UUID from database
+      
+      console.log(`ESP IP: ${espIP}, Shelf ID: ${actualShelfId}`);
 
       // Get current user
       const {
@@ -193,8 +222,37 @@ export const QRScanner: React.FC<QRScannerProps> = ({ shelfId, shelfNumber, book
         return;
       }
 
-      // Send unlock request to ESP8266
+      // Record door unlock event FIRST (critical for auto-issuing books!)
+      const { data: unlockData, error: unlockError } = await (supabase as any)
+        .from('door_unlock_events')
+        .insert({
+          shelf_id: actualShelfId,
+          user_id: user.id,
+          unlocked_at: new Date().toISOString(),
+          book_issued: false,
+          book_id: bookId || null,
+          expected_action: isReturnMode ? 'return' : 'pickup',
+        })
+        .select()
+        .single();
+
+      if (unlockError) {
+        console.error('Failed to record unlock event:', unlockError);
+        toast.error('Error: Failed to record unlock event', {
+          description: unlockError.message,
+        });
+        setLoading(false);
+        return;
+      }
+
+      console.log('Door unlock event recorded:', unlockData);
+      const unlockEventId = unlockData.id;
+
+      // Send unlock request to ESP8266 with unlock event ID
       let hardwareConnected = false;
+      
+      console.log(`Attempting to connect to ESP8266 at: http://${espIP}/unlock`);
+      console.log(`Mode: ${isReturnMode ? 'RETURN' : 'ISSUE'}`);
       
       try {
         const response = await fetch(`http://${espIP}/unlock`, {
@@ -203,47 +261,45 @@ export const QRScanner: React.FC<QRScannerProps> = ({ shelfId, shelfNumber, book
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            qr_code: qrCode,
             user_id: user.id,
+            unlock_event_id: unlockEventId,
+            is_return: isReturnMode,
           }),
         });
 
+        console.log('ESP8266 Response:', response.status, response.statusText);
+        
         if (response.ok) {
+          const data = await response.json();
+          console.log('ESP8266 Response data:', data);
           hardwareConnected = true;
         }
       } catch (error) {
-        console.log('Hardware not connected, using DEMO mode');
+        console.error('ESP8266 Connection Error:', error);
+        console.log('Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          type: error instanceof TypeError ? 'Network/CORS error' : 'Other error',
+          espIP: espIP
+        });
         hardwareConnected = false;
       }
 
       // Continue regardless of hardware status (for demo/testing)
       setDoorStatus('unlocked');
-      
-      // Record door unlock event (critical for auto-issuing books!)
-      const { data: unlockData, error: unlockError } = await (supabase as any).from('door_unlock_events').insert({
-        shelf_id: actualShelfId, // Use the actual UUID from database query
-        user_id: user.id,
-        unlocked_at: new Date().toISOString(),
-        book_issued: false,
-        book_id: bookId || null,
-      });
-
-      if (unlockError) {
-        console.error('Failed to record unlock event:', unlockError);
-        toast.error('Warning: Failed to record unlock event', {
-          description: unlockError.message,
-        });
-      } else {
-        console.log('Door unlock event recorded:', unlockData);
-      }
 
       if (hardwareConnected) {
-        toast.success('Door Unlocked! 🔓', {
-          description: `Shelf ${shelfNumber} door is now unlocked. Pick up your book within 1 minute. It will be auto-issued to you!`,
-        });
+        if (isReturnMode) {
+          toast.success('Door Unlocked! 📥', {
+            description: `Shelf ${shelfNumber} door is now unlocked. Place your book back within 1 minute. It will be auto-returned!`,
+          });
+        } else {
+          toast.success('Door Unlocked! 🔓', {
+            description: `Shelf ${shelfNumber} door is now unlocked. Pick up your book within 1 minute. It will be auto-issued to you!`,
+          });
+        }
       } else {
         toast.success('✅ DEMO MODE - Door Unlocked!', {
-          description: `Hardware not connected. In real mode, Shelf ${shelfNumber} door would unlock. You can test by clicking "Simulate Book Pickup" below.`,
+          description: `Hardware not connected. In real mode, Shelf ${shelfNumber} door would unlock for ${isReturnMode ? 'return' : 'pickup'}.`,
           duration: 10000,
         });
       }
@@ -252,13 +308,13 @@ export const QRScanner: React.FC<QRScannerProps> = ({ shelfId, shelfNumber, book
       await (supabase as any).from('notifications').insert({
         user_id: user.id,
         type: 'info',
-        title: hardwareConnected ? '🔓 Door Unlocked' : '🧪 DEMO: Door Unlocked',
-        message: `Student accessed Shelf ${shelfNumber}${bookId ? ' to pickup a book' : ''}`,
+        title: hardwareConnected ? `🔓 Door Unlocked (${isReturnMode ? 'Return' : 'Pickup'})` : '🧪 DEMO: Door Unlocked',
+        message: `Student accessed Shelf ${shelfNumber} to ${isReturnMode ? 'return' : 'pickup'} a book`,
         metadata: {
           shelf_id: shelfId,
           shelf_number: shelfNumber,
           book_id: bookId,
-          action: 'door_unlocked',
+          action: isReturnMode ? 'door_unlocked_return' : 'door_unlocked_pickup',
           demo_mode: !hardwareConnected,
         },
       });

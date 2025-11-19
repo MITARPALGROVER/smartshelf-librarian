@@ -76,7 +76,7 @@ const AdminDashboard = () => {
         isbn,
         status,
         shelf_id,
-        shelves (
+        shelves!books_shelf_id_fkey (
           shelf_number
         )
       `)

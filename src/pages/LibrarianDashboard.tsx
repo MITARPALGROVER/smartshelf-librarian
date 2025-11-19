@@ -7,9 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Users, Clock, CheckCircle, Activity, X, QrCode } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import ShelfMonitor from "@/components/ShelfMonitor";
-import ShelfAlerts from "@/components/ShelfAlerts";
+import UserHistory from "@/components/UserHistory";
 import { ShelfDoorControl } from "@/components/ShelfDoorControl";
+import ShelfIPManager from "@/components/ShelfIPManager";
+import BookManager from "@/components/BookManager";
+import WeightSensorTester from "@/components/WeightSensorTester";
 import { RefreshCw } from "lucide-react";
 
 interface IssuedBook {
@@ -143,7 +145,7 @@ const LibrarianDashboard = () => {
           title,
           author,
           shelf_id,
-          shelves (
+          shelves!books_shelf_id_fkey (
             shelf_number
           )
         ),
@@ -395,23 +397,35 @@ const LibrarianDashboard = () => {
       </div>
 
       {/* Tabbed Interface for Shelf Management */}
-      <Tabs defaultValue="alerts" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="alerts">Shelf Alerts</TabsTrigger>
-          <TabsTrigger value="monitor">IoT Monitor</TabsTrigger>
-          <TabsTrigger value="doors" className="flex items-center gap-2">
-            <QrCode className="w-4 h-4" />
-            Door Control
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="alerts">
-          <ShelfAlerts />
-        </TabsContent>
-        <TabsContent value="monitor">
-          <ShelfMonitor />
+      <Tabs defaultValue="history" className="w-full">
+        <div className="w-full overflow-x-auto">
+          <TabsList className="inline-flex w-full min-w-max sm:grid sm:grid-cols-4 h-auto">
+            <TabsTrigger value="history" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4">
+              History
+            </TabsTrigger>
+            <TabsTrigger value="doors" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4">
+              <QrCode className="w-3 h-3 sm:w-4 sm:h-4" />
+              Doors
+            </TabsTrigger>
+            <TabsTrigger value="hardware" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4">
+              Hardware
+            </TabsTrigger>
+            <TabsTrigger value="books" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4">
+              Books
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContent value="history">
+          <UserHistory />
         </TabsContent>
         <TabsContent value="doors">
           <ShelfDoorControl />
+        </TabsContent>
+        <TabsContent value="hardware">
+          <ShelfIPManager />
+        </TabsContent>
+        <TabsContent value="books">
+          <BookManager />
         </TabsContent>
       </Tabs>
     </div>

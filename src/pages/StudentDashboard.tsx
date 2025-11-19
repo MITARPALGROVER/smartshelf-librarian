@@ -34,6 +34,11 @@ interface IssuedBook {
     title: string;
     author: string;
     cover_image: string | null;
+    shelf_id: string;
+    shelves: {
+      id: string;
+      shelf_number: number;
+    } | null;
   };
 }
 
@@ -44,6 +49,8 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [isReturnMode, setIsReturnMode] = useState(false);
+  const [returningBook, setReturningBook] = useState<IssuedBook | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -110,7 +117,12 @@ const StudentDashboard = () => {
           id,
           title,
           author,
-          cover_image
+          cover_image,
+          shelf_id,
+          shelves!books_shelf_id_fkey (
+            id,
+            shelf_number
+          )
         )
       `)
       .eq("user_id", user.id)
@@ -130,7 +142,7 @@ const StudentDashboard = () => {
         cover_image,
         status,
         shelf_id,
-        shelves (
+        shelves!books_shelf_id_fkey (
           shelf_number,
           id
         )
@@ -154,13 +166,30 @@ const StudentDashboard = () => {
       return;
     }
     setSelectedBook(book);
+    setIsReturnMode(false);
+    setReturningBook(null);
+    setShowQRScanner(true);
+  };
+
+  const handleReturnClick = (issuedBook: IssuedBook) => {
+    // For return, we need to scan any shelf QR (usually the same shelf)
+    setReturningBook(issuedBook);
+    setIsReturnMode(true);
+    setSelectedBook(null);
     setShowQRScanner(true);
   };
 
   const handleQRSuccess = () => {
     setShowQRScanner(false);
     setSelectedBook(null);
-    toast.success("Door unlocked! Pick up your book within 1 minute.");
+    setReturningBook(null);
+    setIsReturnMode(false);
+    
+    if (isReturnMode) {
+      toast.success("Door unlocked! Place your book back within 1 minute.");
+    } else {
+      toast.success("Door unlocked! Pick up your book within 1 minute.");
+    }
   };
 
   if (loading) {
@@ -242,6 +271,15 @@ const StudentDashboard = () => {
                     <span className="truncate">Due {formatDistanceToNow(new Date(book.due_date), { addSuffix: true })}</span>
                   </div>
                 </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleReturnClick(book)}
+                  className="shrink-0 text-xs sm:text-sm"
+                >
+                  <QrCode className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Return</span>
+                </Button>
               </div>
             ))
           )}
@@ -252,16 +290,31 @@ const StudentDashboard = () => {
       <Dialog open={showQRScanner} onOpenChange={setShowQRScanner}>
         <DialogContent className="w-[95vw] max-w-md sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">Scan Shelf QR Code</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
+              {isReturnMode ? "Return Book - Scan Shelf QR" : "Scan Shelf QR Code"}
+            </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">
-              Point your camera at the QR code on shelf {selectedBook?.shelves?.shelf_number}
+              {isReturnMode 
+                ? `Scan any shelf QR code to unlock door, then place "${returningBook?.books.title}" back within 1 minute`
+                : `Point your camera at the QR code on shelf ${selectedBook?.shelves?.shelf_number}`
+              }
             </DialogDescription>
           </DialogHeader>
-          {selectedBook && (
+          {selectedBook && !isReturnMode && (
             <QRScanner
               shelfId={selectedBook.shelf_id}
               shelfNumber={selectedBook.shelves?.shelf_number || 0}
               bookId={selectedBook.id}
+              isReturnMode={false}
+              onSuccess={handleQRSuccess}
+            />
+          )}
+          {returningBook && isReturnMode && (
+            <QRScanner
+              shelfId={returningBook.books.shelf_id}
+              shelfNumber={returningBook.books.shelves?.shelf_number || 0}
+              bookId={returningBook.book_id}
+              isReturnMode={true}
               onSuccess={handleQRSuccess}
             />
           )}

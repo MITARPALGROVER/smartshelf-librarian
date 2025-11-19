@@ -159,17 +159,6 @@ const Layout = ({ children }: LayoutProps) => {
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     Dashboard
                   </Button>
-                  <Button
-                    variant={location.pathname === "/testing" ? "default" : "ghost"}
-                    onClick={() => {
-                      navigate("/testing");
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full justify-start"
-                  >
-                    🧪 Testing Panel
-                  </Button>
-                  
                   {/* Librarian/Admin: Borrowed Books Report */}
                   {(role === "librarian" || role === "admin") && (
                     <Button
@@ -180,7 +169,8 @@ const Layout = ({ children }: LayoutProps) => {
                       }}
                       className="w-full justify-start"
                     >
-                      📊 Borrowed Books
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Borrowed Books
                     </Button>
                   )}
                   
@@ -228,12 +218,10 @@ const Layout = ({ children }: LayoutProps) => {
                   <BookMarked className="mr-2 h-4 w-4" />
                   Browse Books
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/testing")}>
-                  🧪 Testing Panel
-                </DropdownMenuItem>
                 {(role === "librarian" || role === "admin") && (
                   <DropdownMenuItem onClick={() => navigate("/reports/borrowed-books")}>
-                    📊 Borrowed Books Report
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Borrowed Books
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />

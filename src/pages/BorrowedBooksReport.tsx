@@ -99,7 +99,7 @@ const BorrowedBooksReport = () => {
         books (
           title,
           author,
-          shelves (
+          shelves!books_shelf_id_fkey (
             shelf_number
           )
         ),

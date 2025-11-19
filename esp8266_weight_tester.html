@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP8266 Weight Sensor Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+        .btn-full {
+            grid-column: 1 / -1;
+        }
+        .reading-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            display: none;
+        }
+        .reading-card.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .reading-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .reading-item {
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .reading-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+        .reading-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.3);
+        }
+        .log {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+        .log-entry.error {
+            color: #e53e3e;
+        }
+        .log-entry.success {
+            color: #38a169;
+        }
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: 0.4s;
+            border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #48bb78;
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚖️ Weight Sensor Tester</h1>
+        <p class="subtitle">Test your ESP8266 weight sensor without Supabase</p>
+
+        <div class="input-group">
+            <label for="ip">ESP8266 IP Address</label>
+            <input type="text" id="ip" placeholder="192.168.1.100" value="10.138.175.11">
+        </div>
+
+        <div class="auto-refresh">
+            <label class="switch">
+                <input type="checkbox" id="autoRefresh">
+                <span class="slider"></span>
+            </label>
+            <span style="font-weight: 600; color: #2d3748;">Auto-refresh (every 2 seconds)</span>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="testConnection()">🔌 Test Connection</button>
+            <button class="btn-secondary" onclick="readWeight()">⚖️ Read Weight</button>
+            <button class="btn-primary btn-full" onclick="openWebInterface()">🌐 Open Web Interface</button>
+        </div>
+
+        <div id="readingCard" class="reading-card">
+            <h3 style="margin-bottom: 10px;">Current Reading</h3>
+            <div class="reading-grid">
+                <div class="reading-item">
+                    <div class="reading-label">Current Weight</div>
+                    <div class="reading-value" id="currentWeight">--</div>
+                </div>
+                <div class="reading-item">
+                    <div class="reading-label">Weight Change</div>
+                    <div class="reading-value" id="weightChange">--</div>
+                </div>
+                <div class="reading-item">
+                    <div class="reading-label">Empty Shelf</div>
+                    <div class="reading-value" id="emptyShelf">--</div>
+                </div>
+                <div class="reading-item">
+                    <div class="reading-label">Status</div>
+                    <div class="status" id="sensorStatus">--</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 10px; color: #333;">Activity Log</h3>
+        <div id="log" class="log">
+            <div class="log-entry">Ready to test. Enter your ESP8266 IP address above.</div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.insertBefore(entry, logDiv.firstChild);
+            
+            // Keep only last 20 entries
+            while (logDiv.children.length > 20) {
+                logDiv.removeChild(logDiv.lastChild);
+            }
+        }
+
+        function getIP() {
+            return document.getElementById('ip').value.trim();
+        }
+
+        async function testConnection() {
+            const ip = getIP();
+            if (!ip) {
+                log('Please enter an IP address', 'error');
+                return;
+            }
+
+            log(`Testing connection to ${ip}...`);
+            
+            try {
+                const response = await fetch(`http://${ip}/status`, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Connected! Status: ${data.status}, Uptime: ${data.uptime}s`, 'success');
+                    log(`WiFi: ${data.wifi_ssid}, Signal: ${data.wifi_rssi} dBm`, 'success');
+                } else {
+                    log(`❌ Connection failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Cannot reach ESP8266: ${error.message}`, 'error');
+            }
+        }
+
+        async function readWeight() {
+            const ip = getIP();
+            if (!ip) {
+                log('Please enter an IP address', 'error');
+                return;
+            }
+
+            log(`Reading weight from ${ip}...`);
+            
+            try {
+                const response = await fetch(`http://${ip}/weight`, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayReading(data);
+                    
+                    if (data.sensor_status === 'connected') {
+                        log(`✅ Weight: ${data.weight.toFixed(1)}g, Change: ${data.weight_change.toFixed(1)}g`, 'success');
+                    } else {
+                        log(`⚠️ Sensor disconnected: ${data.error}`, 'error');
+                    }
+                } else {
+                    log(`❌ Failed to read weight: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Cannot reach ESP8266: ${error.message}`, 'error');
+            }
+        }
+
+        function displayReading(data) {
+            document.getElementById('readingCard').classList.add('show');
+            document.getElementById('currentWeight').textContent = `${data.weight.toFixed(1)}g`;
+            document.getElementById('weightChange').textContent = `${data.weight_change >= 0 ? '+' : ''}${data.weight_change.toFixed(1)}g`;
+            document.getElementById('emptyShelf').textContent = `${data.empty_shelf_weight.toFixed(1)}g`;
+            document.getElementById('sensorStatus').textContent = data.sensor_status;
+            document.getElementById('sensorStatus').style.background = 
+                data.sensor_status === 'connected' ? 'rgba(72, 187, 120, 0.3)' : 'rgba(229, 62, 62, 0.3)';
+        }
+
+        function openWebInterface() {
+            const ip = getIP();
+            if (!ip) {
+                log('Please enter an IP address', 'error');
+                return;
+            }
+            window.open(`http://${ip}`, '_blank');
+            log(`Opening web interface at http://${ip}`, 'success');
+        }
+
+        document.getElementById('autoRefresh').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                log('Auto-refresh enabled (every 2 seconds)', 'success');
+                autoRefreshInterval = setInterval(readWeight, 2000);
+            } else {
+                log('Auto-refresh disabled');
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        });
+
+        // Load saved IP from localStorage
+        const savedIP = localStorage.getItem('esp_ip');
+        if (savedIP) {
+            document.getElementById('ip').value = savedIP;
+        }
+
+        // Save IP to localStorage when changed
+        document.getElementById('ip').addEventListener('blur', (e) => {
+            localStorage.setItem('esp_ip', e.target.value);
+        });
+    </script>
+</body>
+</html>

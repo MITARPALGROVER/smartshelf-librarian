@@ -14,7 +14,6 @@ import StudentDashboard from "./pages/StudentDashboard";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import RoleManager from "./pages/RoleManager";
-import TestingPanel from "./pages/TestingPanel";
 import BorrowedBooksReport from "./pages/BorrowedBooksReport";
 import NotFound from "./pages/NotFound";
 
@@ -73,16 +72,6 @@ const App = () => (
                 <ProtectedRoute requiredRole="admin">
                   <Layout>
                     <AdminDashboard />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/testing"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <TestingPanel />
                   </Layout>
                 </ProtectedRoute>
               }

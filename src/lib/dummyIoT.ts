@@ -191,7 +191,7 @@ export const getSimulationSuggestions = async () => {
         title,
         weight,
         shelf_id,
-        shelves (
+        shelves!books_shelf_id_fkey (
           shelf_number
         )
       )

@@ -73,7 +73,7 @@ const BooksPage = () => {
         cover_image,
         description,
         shelf_id,
-        shelves (
+        shelves!books_shelf_id_fkey (
           shelf_number
         )
       `)
